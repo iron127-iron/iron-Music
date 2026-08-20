@@ -1,0 +1,1 @@
+# newcommand package - commands without = prefix (future expansion)
