@@ -1,0 +1,95 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.part
+
+# Discord bot
+cookies.txt
+*.session
+session/
+
+# Data
+blacklist.json
+core/stats.json
+core/settings.json
+*.state
+*.sq1.part
+*.sqi.part
+
+# Downloads
+temp/
+downloads/
+iron_music_downloads/
+
+# Media
+*.mp4
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.webm
+*.part
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Web panel
+web_panel/__pycache__/
+web_panel/*.pem
+web_panel/*.key
+web_panel/cert.pem
+web_panel/key.pem
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/

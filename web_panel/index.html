@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iron Music Bot - 控制面板</title>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0d0d0d; --card:#1a1a1a; --accent:#ff69b4; --accent-dim:#ff69b440; --text:#fff; --muted:#888; --border:#333; --warn:#ff6b6b; --success:#0f0; }
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+header h1{font-size:1.25rem;font-weight:900;background:linear-gradient(90deg,#ff69b4,#ffd700);-webkit-background-clip:text;background-clip:text;color:transparent}
+.status{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted)}.dot{width:8px;height:8px;border-radius:50%;background:#444}.dot.online{background:#0f0;box-shadow:0 0 8px #0f0}
+.user-info{display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:#222}
+.user-name{font-size:.85rem;font-weight:500}
+.btn-login{padding:8px 16px;background:linear-gradient(135deg,#5865f2,#4752c4);border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-size:.8rem}
+.btn-login:hover{opacity:.9}
+.btn-logout{padding:8px 12px;background:#333;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.8rem;cursor:pointer}
+main{padding:24px;display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}
+.guild-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.guild-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px var(--accent-dim)}
+.guild-card.locked{opacity:.6;border-color:#555}
+.guild-head{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)}
+.guild-icon{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#222}
+.guild-icon-fallback{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#e055a0);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;color:#000}
+.guild-name{font-weight:700;font-size:1.1rem}
+.guild-lock{margin-left:auto;padding:4px 10px;background:var(--warn);color:#000;border-radius:20px;font-size:.7rem;font-weight:700}
+.now-playing{padding:16px;background:linear-gradient(90deg,var(--accent-dim),transparent);border-bottom:1px solid var(--border)}
+.np-title{font-weight:600;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-meta{font-size:.8rem;color:var(--muted);margin-top:4px;display:flex;gap:16px}
+.progress-bar{height:4px;background:#222;border-radius:2px;overflow:hidden;margin-top:12px}
+.progress-fill{height:100%;background:linear-gradient(90deg,#ff69b4,#ffd700);border-radius:2px;transition:width .5s}
+.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px}
+.controls-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 8px}
+.btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:#222;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:.75rem;cursor:pointer;transition:.15s}
+.btn:hover{border-color:var(--accent);background:var(--accent-dim)}.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.4;cursor:not-allowed;border-color:#444;background:#1a1a1a}
+.btn.primary{background:linear-gradient(135deg,var(--accent),#e055a0);border-color:transparent;color:#000;font-weight:700}
+.btn.icon{font-size:1.2rem}
+.btn.small{padding:8px 6px;font-size:.7rem}
+.volume-row{display:flex;align-items:center;gap:12px;padding:0 16px 16px}
+.volume-row label{font-size:.8rem;color:var(--muted);min-width:50px}
+.volume-slider{flex:1;height:6px;-webkit-appearance:none;background:#222;border-radius:3px;outline:none}
+.volume-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 4px var(--accent)}
+.volume-slider:disabled{opacity:.4;cursor:not-allowed}
+.queue{padding:0 16px 16px;max-height:300px;overflow-y:auto}
+.queue-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#222;border-radius:8px;margin-bottom:6px;transition:.15s}
+.queue-item:hover{background:#2a2a2a}
+.queue-num{font-weight:700;color:var(--accent);min-width:24px;font-size:.8rem}
+.queue-info{flex:1;min-width:0}
+.queue-title{font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.queue-dur{font-size:.75rem;color:var(--muted)}
+.empty{text-align:center;padding:32px;color:var(--muted)}
+.cmd-input-row{display:flex;gap:8px;padding:0 16px 16px}
+.cmd-input{flex:1;padding:10px 12px;background:#222;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.85rem}
+.cmd-input:focus{outline:none;border-color:var(--accent)}
+.cmd-btn{padding:10px 16px;background:linear-gradient(135deg,var(--accent),#e055a0);border:none;border-radius:8px;color:#000;font-weight:700;cursor:pointer}
+.cmd-btn:disabled{opacity:.5;cursor:not-allowed}
+.cmd-output{padding:16px;background:#111;border-top:1px solid var(--border);font-family:monospace;font-size:.75rem;color:var(--muted);max-height:150px;overflow-y:auto;white-space:pre-wrap}
+.login-prompt{text-align:center;padding:32px;color:var(--muted)}
+.login-prompt a{color:var(--accent);text-decoration:none;font-weight:500}
+.login-prompt a:hover{text-decoration:underline}
+.lock-icon{display:inline-block;margin-right:6px}
+@media(max-width:768px){main{grid-template-columns:1fr;padding:16px}.controls{grid-template-columns:repeat(3,1fr)}.controls-row{grid-template-columns:repeat(2,1fr)}header{flex-wrap:wrap;gap:12px}}
+</style>
+</head>
+<body>
+<header>
+<h1>🎀 Iron Music Bot</h1>
+<div class="status"><span class="dot" id="statusDot"></span><span id="statusText">連線中...</span></div>
+<div class="user-info" id="userInfo">
+<div class="login-prompt" id="loginPrompt">請<a href="/login">登入 Discord</a>以控制機器人</div>
+<div style="display:none" id="userLoggedIn">
+<img class="user-avatar" id="userAvatar" src="" alt="">
+<span class="user-name" id="userName"></span>
+<button class="btn-logout" onclick="location.href='/logout'">登出</button>
+</div>
+</div>
+</header>
+<main id="guilds"></main>
+<script>
+const socket = io({transports:['websocket','polling'],reconnection:true,reconnectionDelay:1000});
+console.log('Socket.io connecting to:', window.location.origin);
+const guildsEl=document.getElementById('guilds'),dot=document.getElementById('statusDot'),txt=document.getElementById('statusText');
+const loginPrompt=document.getElementById('loginPrompt'),userLoggedIn=document.getElementById('userLoggedIn'),userAvatar=document.getElementById('userAvatar'),userName=document.getElementById('userName');
+let state={}, currentUser=null;
+
+socket.on('connect',()=>{console.log('Connected!');dot.classList.add('online');txt.textContent='已連線'});
+socket.on('disconnect',(reason)=>{console.log('Disconnected:',reason);dot.classList.remove('online');txt.textContent='斷線，重連中...'});
+socket.on('connect_error',(err)=>{console.log('Connect error:',err);txt.textContent='連線錯誤: '+err.message});
+socket.on('state',data=>{console.log('State received:',data);state=data;currentUser=data.user;updateUserUI();render()});
+
+function send(guildId,action,value){socket.emit('control',{guild_id:guildId,action,value})}
+
+function updateUserUI(){
+if(currentUser){
+loginPrompt.style.display='none';
+userLoggedIn.style.display='flex';
+userAvatar.src=currentUser.avatar?`https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png`:'https://cdn.discordapp.com/embed/avatars/0.png';
+userName.textContent=`${currentUser.username}#${currentUser.discriminator||'0'}`;
+}else{
+loginPrompt.style.display='block';
+userLoggedIn.style.display='none';
+}
+}
+
+function render(){
+guildsEl.innerHTML='';
+if(!state.guilds?.length){guildsEl.innerHTML='<div class="empty">機器人未在任何伺服器</div>';return}
+state.guilds.forEach(g=>{guildsEl.appendChild(createGuildCard(g))})
+}
+
+function createGuildCard(g){
+const card=document.createElement('div');card.className='guild-card';
+if(!g.can_control)card.classList.add('locked');
+let npHtml='<div class="empty">未播放</div>';
+if(g.current){
+const pct=g.current.duration?Math.min(100,(g.progress.match(/(\d+)%/)||[])[1]||0):0;
+npHtml=`<div class="now-playing"><div class="np-title">${escape(g.current.title)}</div>
+<div class="np-meta">${fmt(g.current.duration)} \u2022 音量 ${g.volume}% \u2022 ${g.speed}x ${g.loop?'\u2197':''}</div>
+<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>`
+}
+const qHtml=g.queue?.length?g.queue.map((s,i)=>`<div class="queue-item"><span class="queue-num">${i+1}.</span>
+<div class="queue-info"><div class="queue-title">${escape(s.title)}</div><span class="queue-dur">${fmt(s.duration)}</span></div></div>`).join(''):'<div class="empty">隊列空空</div>';
+
+const iconHtml = g.icon 
+  ? `<img class="guild-icon" src="${g.icon}" alt="">`
+  : `<div class="guild-icon-fallback">${escape(g.name.charAt(0).toUpperCase())}</div>`;
+
+const lockHtml = g.can_control ? '' : `<span class="guild-lock"><span class="lock-icon">🔒</span>需在同語音頻道</span>`;
+
+card.innerHTML=`<div class="guild-head">${iconHtml}<span class="guild-name">${escape(g.name)}</span>${lockHtml}</div>
+${npHtml}
+<div class="controls">
+<button class="btn ${g.playing&&!g.paused?'primary':''}" onclick="send('${g.id}','${g.playing&&!g.paused?'pause':'play'}')" ${!g.can_control?'disabled':''}><span class="icon">${g.playing&&!g.paused?'\u23F8':'\u25B6'}</span>${g.playing&&!g.paused?'暫停':'播放'}</button>
+<button class="btn" onclick="send('${g.id}','skip')" ${!g.can_control?'disabled':''}><span class="icon">\u23ED</span>跳過</button>
+<button class="btn" onclick="send('${g.id}','stop')" ${!g.can_control?'disabled':''}><span class="icon">\u23F9</span>停止</button>
+<button class="btn" onclick="send('${g.id}','loop')" ${!g.can_control?'disabled':''}><span class="icon">\u21C1</span>${g.loop?'關閉':'開啟'}循環</button>
+<button class="btn" onclick="send('${g.id}','shuffle')" ${!g.can_control?'disabled':''}><span class="icon">\u23C0</span>洗牌</button>
+<button class="btn" onclick="send('${g.id}','clear')" ${!g.can_control?'disabled':''}><span class="icon">\u23F7</span>清空</button>
+</div>
+<div class="controls-row">
+<button class="btn small" onclick="send('${g.id}','seek',0)" ${!g.can_control?'disabled':''}><span class="icon">\u23EA</span>開頭</button>
+<button class="btn small" onclick="send('${g.id}','seek',-30)" ${!g.can_control?'disabled':''}><span class="icon">\u23EE</span>倒退30s</button>
+<button class="btn small" onclick="send('${g.id}','seek',30)" ${!g.can_control?'disabled':''}><span class="icon">\u23ED</span>前進30s</button>
+<button class="btn small" onclick="send('${g.id}','speed',0)" ${!g.can_control?'disabled':''}><span class="icon">\u23F1</span>倍速切換</button>
+</div>
+<div class="volume-row"><label>音量</label><input type="range" class="volume-slider" min="0" max="150" value="${g.volume}" oninput="send('${g.id}','volume',this.value)" ${!g.can_control?'disabled':''}><span>${g.volume}%</span></div>
+<div class="cmd-input-row">
+<input type="text" class="cmd-input" placeholder="輸入指令 (不需前綴) 例如: play 歌名, search 關鍵字, lyrics, download, np, queue, volume 50, seek 30, loop, shuffle, clear, skip, stop, pause, resume" id="cmdInput-${g.id}" onkeydown="if(event.key==='Enter')runCmd('${g.id}')" ${!g.can_control?'disabled':''}>
+<button class="cmd-btn" onclick="runCmd('${g.id}')" ${!g.can_control?'disabled':''}>執行</button>
+</div>
+<div class="cmd-output" id="cmdOutput-${g.id}">指令輸出將顯示在此...</div>
+<div class="queue">${qHtml}</div>`;
+return card;
+}
+
+function runCmd(guildId){
+const input=document.getElementById('cmdInput-'+guildId);
+const output=document.getElementById('cmdOutput-'+guildId);
+const cmd=input.value.trim();
+if(!cmd)return;
+output.textContent='> '+cmd+'\n執行中...';
+send(guildId,'command',cmd);
+input.value='';
+}
+
+function fmt(s){if(!s)return'0:00';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return(h?h+':':'')+m.toString().padStart(2,'0')+':'+sec.toString().padStart(2,'0')}
+function escape(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":"'"}[c]))}
+
+// Check login status on load
+fetch('/me').then(r=>r.json()).then(d=>{
+if(d.user){
+currentUser=d.user;
+updateUserUI();
+}
+}).catch(()=>{});
+</script>
+</body>
+</html>
