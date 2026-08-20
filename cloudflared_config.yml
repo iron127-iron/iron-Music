@@ -1,0 +1,11 @@
+tunnel: iron-music-bot
+credentials-file: C:\Users\user\.cloudflared\<TUNNEL_ID>.json
+
+ingress:
+  - hostname: iron-music-bot.cc.cd
+    service: http://localhost:1270
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      keepAliveTimeout: 90s
+  - service: http_status:404

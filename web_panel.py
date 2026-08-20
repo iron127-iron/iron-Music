@@ -8,7 +8,7 @@ import socketio
 from aiohttp_session import setup, get_session, new_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 import aiohttp
-from aiohttp import web_middleware
+from aiohttp import web
 
 from core.config import bot
 from core.player_store import players
@@ -19,15 +19,15 @@ from core.player_store import players
 # Discord OAuth2
 DISCORD_CLIENT_ID = '1539155008811962441'
 DISCORD_CLIENT_SECRET = '12yTnEDpRsVsAcwEfxzJQwliZSF4HsUr'
-# OAuth 回調指向「前端域名」 (GitHub Pages)
-DISCORD_REDIRECT_URI = 'https://YOUR_GITHUB_USERNAME.github.io/iron-music-bot-panel/callback'
+# OAuth 回調指向「後端域名」 (Cloudflare Tunnel)
+DISCORD_REDIRECT_URI = 'https://iron-music-bot.cc.cd/callback'
 DISCORD_API_BASE = 'https://discord.com/api'
 
 # 前端域名 (GitHub Pages) - 用於 CORS
-FRONTEND_ORIGIN = 'https://YOUR_GITHUB_USERNAME.github.io'
+FRONTEND_ORIGIN = 'https://iron127-iron.github.io'
 
 # 後端綁定
-WEB_PORT = int(os.getenv('WEB_PANEL_PORT', '12700'))
+WEB_PORT = int(os.getenv('WEB_PANEL_PORT', '1270'))
 WEB_HOST = os.getenv('WEB_PANEL_HOST', '0.0.0.0')
 
 # Session
@@ -41,7 +41,7 @@ DISCORD_API_BASE = 'https://discord.com/api'
 # =========================
 sio = socketio.AsyncServer(
     async_mode='aiohttp', 
-    cors_allowed_origins=[FRONTEND_ORIGIN, 'https://tpe-cht1.taiwanfrp.me:12700']
+    cors_allowed_origins=[FRONTEND_ORIGIN, 'https://iron-music-bot.cc.cd']
 )
 web_app = web.Application()
 
@@ -49,7 +49,7 @@ web_app = web.Application()
 setup(web_app, EncryptedCookieStorage(SESSION_SECRET))
 
 # CORS Middleware
-@web_middleware
+@web.middleware
 async def cors_middleware(request, handler):
     if request.method == 'OPTIONS':
         response = web.Response()
@@ -355,12 +355,12 @@ async def callback(request):
         }
     
     # Redirect back to frontend
-    return web.HTTPFound('https://YOUR_GITHUB_USERNAME.github.io/iron-music-bot-panel/')
+    return web.HTTPFound('https://iron127-iron.github.io/iron-Music/')
 
 async def logout(request):
     session = await get_session(request)
     session.invalidate()
-    return web.HTTPFound('https://YOUR_GITHUB_USERNAME.github.io/iron-music-bot-panel/')
+    return web.HTTPFound('https://iron127-iron.github.io/iron-Music/')
 
 async def me(request):
     session = await get_session(request)

@@ -71,18 +71,19 @@ main{padding:24px;display:grid;gap:24px;grid-template-columns:repeat(auto-fit,mi
 <h1>🎀 Iron Music Bot</h1>
 <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">連線中...</span></div>
 <div class="user-info" id="userInfo">
-<div class="login-prompt" id="loginPrompt">請<a href="/login">登入 Discord</a>以控制機器人</div>
+<div class="login-prompt" id="loginPrompt">請<a href="#" onclick="location.href=API_BASE+'/login'">登入 Discord</a>以控制機器人</div>
 <div style="display:none" id="userLoggedIn">
 <img class="user-avatar" id="userAvatar" src="" alt="">
 <span class="user-name" id="userName"></span>
-<button class="btn-logout" onclick="location.href='/logout'">登出</button>
+<button class="btn-logout" onclick="location.href=API_BASE+'/logout'">登出</button>
 </div>
 </div>
 </header>
 <main id="guilds"></main>
 <script>
-const socket = io({transports:['websocket','polling'],reconnection:true,reconnectionDelay:1000});
-console.log('Socket.io connecting to:', window.location.origin);
+const API_BASE = 'https://iron-music-bot.cc.cd';
+const socket = io(API_BASE, {transports:['websocket','polling'],reconnection:true,reconnectionDelay:1000});
+console.log('Socket.io connecting to:', API_BASE);
 const guildsEl=document.getElementById('guilds'),dot=document.getElementById('statusDot'),txt=document.getElementById('statusText');
 const loginPrompt=document.getElementById('loginPrompt'),userLoggedIn=document.getElementById('userLoggedIn'),userAvatar=document.getElementById('userAvatar'),userName=document.getElementById('userName');
 let state={}, currentUser=null;
@@ -171,7 +172,7 @@ function fmt(s){if(!s)return'0:00';const h=Math.floor(s/3600),m=Math.floor((s%36
 function escape(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":"'"}[c]))}
 
 // Check login status on load
-fetch('/me').then(r=>r.json()).then(d=>{
+fetch(API_BASE + '/me').then(r=>r.json()).then(d=>{
 if(d.user){
 currentUser=d.user;
 updateUserUI();
